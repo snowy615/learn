@@ -2,6 +2,7 @@
 import openai
 import easygui as g
 import boto3
+import pygame
 
 class Chat:
     def __init__(self, conversation_list=[]) -> None:
@@ -76,7 +77,7 @@ def total_counts(response):
         return float(人民币花费)
 
 def main():
-
+    pygame.init()
     talk = Chat()
     print()
     count = 0
@@ -88,9 +89,20 @@ def main():
             words = input("您还可以继续与我交流，请您继续说：\n(请输入您的需求或问题)：")
         print()
         talk.ask(words)
+        #pygame.mixer.music.load("/Users/snowyan/PycharmProjects/learn/learn/output.mp3")
+        try:
+            # pygame.mixer.music.load("output.mp3")
+            pygame.mixer.music.load("/Users/snowyan/PycharmProjects/learn/learn/output.mp3")
+            print("load")
+            pygame.mixer.music.play()
+            print("played")
+        except pygame.error as e:
+            print("An error occurred:", e)
+        while pygame.mixer.music.get_busy():
+            pass
         count += 1
 
-    g.msgbox("对不起，您已达到使用次数的限额，欢迎您下次使用！")
+    # g.msgbox("对不起，您已达到使用次数的限额，欢迎您下次使用！")
     print(f'本轮聊天合计花费{sum(talk.costs_list)}元人民币。')
 
 
