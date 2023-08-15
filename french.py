@@ -3,6 +3,8 @@ import openai
 import easygui as g
 import boto3
 import pygame
+#botocore is part of boto3
+from botocore.exceptions import NoCredentialsError
 
 class Chat:
     def __init__(self, conversation_list=[]) -> None:
@@ -34,8 +36,8 @@ class Chat:
         except Exception as e:
             print("Error:", e)
 
-
-    # 打印对话
+                    
+            # 打印对话
     def show_conversation(self, msg_list):
         for msg in msg_list[-2:]:
             if msg['role'] == 'user':  # 如果是用户的话
@@ -76,9 +78,60 @@ def total_counts(response):
 
         return float(人民币花费)
 
+
+def audio_to_text():
+        #need to go on website to s3 to create bucket
+        s3 = boto3.client('s3')
+        try:
+            bucket_name = 'languagelearn'
+            file_path = '/Users/snowyan/PycharmProjects/learn/learn/input.mp3'  # Replace with the actual file path
+            object_name = 'input.mp3'  # Replace with the desired object key
+
+            s3.upload_file(file_path, bucket_name, object_name)
+            print("File uploaded successfully")
+        except NoCredentialsError:
+            print("Credentials not available")
+
+
+        # Create a Amazon Transcribe client
+        transcribe = boto3.client('transcribe')
+
+        # Specify the S3 URI of the audio file you want to transcribe
+        audio_uri = 's3://languagelearner/input.mp3'
+
+        # # Start the transcription job
+        # transcribe.start_transcription_job(
+        #     TranscriptionJobName='YourTranscriptionJobName',
+        #     Media={'MediaFileUri': audio_uri},
+        #     MediaFormat='mp3',  # Update this according to your audio file format
+        #     LanguageCode='fr-FR'  # Update this according to the spoken language
+        # )
+
+        # # Wait for the transcription job to complete
+        # while True:
+        #     response = transcribe.get_transcription_job(
+        #         TranscriptionJobName='YourTranscriptionJobName'
+        #     )
+        #     if response['TranscriptionJob']['TranscriptionJobStatus'] in ['COMPLETED', 'FAILED']:
+        #         break
+
+        # # Get the transcription results
+        # if response['TranscriptionJob']['TranscriptionJobStatus'] == 'COMPLETED':
+        #     transcript_uri = response['TranscriptionJob']['Transcript']['TranscriptFileUri']
+        #     transcript = transcribe.get_object(Bucket='your-bucket', Key=transcript_uri.split('/')[-1])['Body'].read().decode('utf-8')
+        #     print(transcript)
+        # else:
+        #     print("Transcription job failed.")
+
+
+
+
+
+
 def main():
     pygame.init()
     talk = Chat()
+    audio_to_text()
     print()
     count = 0
     count_limit = eval(input("你想要对话的次数是多少呢？\n(请输入数字即可)"))
