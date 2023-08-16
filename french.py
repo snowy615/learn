@@ -54,7 +54,7 @@ class Chat:
     # 调用chatgpt，并计算开销
     def ask(self, prompt):
         self.conversation_list.append({"role": "user", "content": prompt})
-        openai.api_key = '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'
+        openai.api_key = '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'
         response = openai.ChatCompletion.create(model="gpt-3.5-turbo", messages=self.conversation_list)
         answer = response.choices[0].message['content']
         # 下面这一步是把chatGPT的回答也添加到对话列表中，这样下一次问问题的时候就能形成上下文了
@@ -130,8 +130,8 @@ def audio_to_text():
 
 def main():
     pygame.init()
-    talk = Chat()
     audio_to_text()
+    talk = Chat()
     print()
     count = 0
     count_limit = eval(input("你想要对话的次数是多少呢？\n(请输入数字即可)"))
