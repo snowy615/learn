@@ -5,6 +5,83 @@ import boto3
 import pygame
 #botocore is part of boto3
 from botocore.exceptions import NoCredentialsError
+import sounddevice as sd
+import soundfile as sf
+from pydub import AudioSegment
+
+#------------------------------------------------------------------------------------------------------------------------------------
+
+class Audio:
+    def record_audio_with_threshold(output_wav, sample_rate=44100, channels=2, threshold=0.01, min_silence_duration=1):
+        print("Recording...")
+
+        audio_data = []
+
+        def callback(indata, frames, time, status):
+            if status:
+                print("Error:", status)
+            if any(indata > threshold):
+                audio_data.extend(indata)
+
+        # Start recording
+        with sd.InputStream(callback=callback, channels=channels, samplerate=sample_rate):
+            sd.sleep(int(min_silence_duration * 1000))  # Let the recording continue for the specified silence duration
+
+        print("Recording finished.")
+
+        # Convert the recorded audio to WAV
+        sf.write(output_wav, audio_data, sample_rate)
+
+
+
+    def audio_to_text():
+            #need to go on website to s3 to create bucket
+            s3 = boto3.client('s3')
+            try:
+                bucket_name = 'languagelearn'
+                file_path = '/Users/snowyan/PycharmProjects/learn/learn/input.mp3'  # Replace with the actual file path
+                object_name = 'input.mp3'  # Replace with the desired object key
+
+                s3.upload_file(file_path, bucket_name, object_name)
+                print("File uploaded successfully")
+            except NoCredentialsError:
+                print("Credentials not available")
+
+
+            # Create a Amazon Transcribe client
+            transcribe = boto3.client('transcribe')
+
+            # Specify the S3 URI of the audio file you want to transcribe
+            audio_uri = 's3://languagelearner/input.mp3'
+
+            # # Start the transcription job
+            # transcribe.start_transcription_job(
+            #     TranscriptionJobName='YourTranscriptionJobName',
+            #     Media={'MediaFileUri': audio_uri},
+            #     MediaFormat='mp3',  # Update this according to your audio file format
+            #     LanguageCode='fr-FR'  # Update this according to the spoken language
+            # )
+
+            # # Wait for the transcription job to complete
+            # while True:
+            #     response = transcribe.get_transcription_job(
+            #         TranscriptionJobName='YourTranscriptionJobName'
+            #     )
+            #     if response['TranscriptionJob']['TranscriptionJobStatus'] in ['COMPLETED', 'FAILED']:
+            #         break
+
+            # # Get the transcription results
+            # if response['TranscriptionJob']['TranscriptionJobStatus'] == 'COMPLETED':
+            #     transcript_uri = response['TranscriptionJob']['Transcript']['TranscriptFileUri']
+            #     transcript = transcribe.get_object(Bucket='your-bucket', Key=transcript_uri.split('/')[-1])['Body'].read().decode('utf-8')
+            #     print(transcript)
+            # else:
+            #     print("Transcription job failed.")
+
+
+
+
+#------------------------------------------------------------------------------------------------------------------------------------
 
 class Chat:
     def __init__(self, conversation_list=[]) -> None:
@@ -65,7 +142,7 @@ class Chat:
         self.costs_list.append(人民币花费)
         print()
     
-
+#------------------------------------------------------------------------------------------------------------------------------------
 
 def total_counts(response):
 
@@ -78,60 +155,31 @@ def total_counts(response):
 
         return float(人民币花费)
 
-
-def audio_to_text():
-        #need to go on website to s3 to create bucket
-        s3 = boto3.client('s3')
-        try:
-            bucket_name = 'languagelearn'
-            file_path = '/Users/snowyan/PycharmProjects/learn/learn/input.mp3'  # Replace with the actual file path
-            object_name = 'input.mp3'  # Replace with the desired object key
-
-            s3.upload_file(file_path, bucket_name, object_name)
-            print("File uploaded successfully")
-        except NoCredentialsError:
-            print("Credentials not available")
-
-
-        # Create a Amazon Transcribe client
-        transcribe = boto3.client('transcribe')
-
-        # Specify the S3 URI of the audio file you want to transcribe
-        audio_uri = 's3://languagelearner/input.mp3'
-
-        # # Start the transcription job
-        # transcribe.start_transcription_job(
-        #     TranscriptionJobName='YourTranscriptionJobName',
-        #     Media={'MediaFileUri': audio_uri},
-        #     MediaFormat='mp3',  # Update this according to your audio file format
-        #     LanguageCode='fr-FR'  # Update this according to the spoken language
-        # )
-
-        # # Wait for the transcription job to complete
-        # while True:
-        #     response = transcribe.get_transcription_job(
-        #         TranscriptionJobName='YourTranscriptionJobName'
-        #     )
-        #     if response['TranscriptionJob']['TranscriptionJobStatus'] in ['COMPLETED', 'FAILED']:
-        #         break
-
-        # # Get the transcription results
-        # if response['TranscriptionJob']['TranscriptionJobStatus'] == 'COMPLETED':
-        #     transcript_uri = response['TranscriptionJob']['Transcript']['TranscriptFileUri']
-        #     transcript = transcribe.get_object(Bucket='your-bucket', Key=transcript_uri.split('/')[-1])['Body'].read().decode('utf-8')
-        #     print(transcript)
-        # else:
-        #     print("Transcription job failed.")
-
-
-
-
-
+#------------------------------------------------------------------------------------------------------------------------------------
 
 def main():
     pygame.init()
-    audio_to_text()
+    output_wav = "recorded_audio.wav"
+    input = "input.mp3"
+    a = Audio()
     talk = Chat()
+    
+    # Define the WAV and MP3 file names
+    output_wav = "recorded_audio.wav"
+    output_mp3 = "input.mp3"
+
+    # Call the function to record audio
+
+    a.record_audio_with_threshold(output_wav)
+    
+    # Load the recorded audio from the WAV file
+    audio = AudioSegment.from_wav(output_wav)
+
+    # Export the recorded audio as MP3 with the desired file name
+    audio.export(output_mp3, format="mp3")
+
+    # Print a message indicating the conversion is complete
+    print("Conversion to MP3 complete.")
     print()
     count = 0
     count_limit = eval(input("你想要对话的次数是多少呢？\n(请输入数字即可)"))
