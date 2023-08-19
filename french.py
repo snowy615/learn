@@ -34,10 +34,10 @@ def record_audio():
 
     # This will convert the NumPy array to an audio
     # file with the given sampling frequency
-    write("recording0.wav", freq, recording)
-
+    write("input.wav", freq, recording)
+    #another way to to convert
     # Convert the NumPy array to audio file
-    wv.write("recording1.wav", recording, freq, sampwidth=2)
+    # wv.write("recording1.wav", recording, freq, sampwidth=2)
     return recording
 
 
