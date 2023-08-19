@@ -161,17 +161,16 @@ def main():
     time.sleep(5)
     talk = Chat()
 
-    audio_url = 'YOUR_AUDIO_URL'
-    #will add transcription func later
+    audio_url = '/Users/snowyan/PycharmProjects/learn/learn/input.wav'
 
-    # transcription = transcribe_audio(audio_url)
+    transcription = transcribe_audio(audio_url)
 
-    # if transcription:
-    #     print("Transcription:")
-    #     print(transcription)
-    # else:
-    #     print("Transcription failed.")
-    #     print()
+    if transcription:
+        print("Transcription:")
+        print(transcription)
+    else:
+        print("Transcription failed.")
+        print()
     count = 0
     count_limit = eval(input("你想要对话的次数是多少呢？\n(请输入数字即可)"))
     while count < count_limit:  # 上下文token数量是有极限的，理论上只能支持有限轮次的对话，况且，钱花光了也就不能用了。。。
