@@ -8,77 +8,75 @@ from botocore.exceptions import NoCredentialsError
 import sounddevice as sd
 import soundfile as sf
 from pydub import AudioSegment
+import time
 
+# import required libraries
+import sounddevice as sd
+from scipy.io.wavfile import write
+import wavio as wv
+
+#audio
 #------------------------------------------------------------------------------------------------------------------------------------
 
-class Audio:
-    def record_audio_with_threshold(output_wav, sample_rate=44100, channels=2, threshold=0.01, min_silence_duration=1):
-        print("Recording...")
+def record_audio():
+    # Sampling frequency
+    freq = 44100
 
-        audio_data = []
+    # Recording duration
+    duration = 5
 
-        def callback(indata, frames, time, status):
-            if status:
-                print("Error:", status)
-            if any(indata > threshold):
-                audio_data.extend(indata)
+    # Start recorder with the given values
+    # of duration and sample frequency
+    recording = sd.rec(int(duration * freq), samplerate=freq, channels=1)
 
-        # Start recording
-        with sd.InputStream(callback=callback, channels=channels, samplerate=sample_rate):
-            sd.sleep(int(min_silence_duration * 1000))  # Let the recording continue for the specified silence duration
+    # Record audio for the given number of seconds
+    sd.wait()
 
-        print("Recording finished.")
+    # This will convert the NumPy array to an audio
+    # file with the given sampling frequency
+    write("recording0.wav", freq, recording)
 
-        # Convert the recorded audio to WAV
-        sf.write(output_wav, audio_data, sample_rate)
-
-
-
-    def audio_to_text():
-            #need to go on website to s3 to create bucket
-            s3 = boto3.client('s3')
-            try:
-                bucket_name = 'languagelearn'
-                file_path = '/Users/snowyan/PycharmProjects/learn/learn/input.mp3'  # Replace with the actual file path
-                object_name = 'input.mp3'  # Replace with the desired object key
-
-                s3.upload_file(file_path, bucket_name, object_name)
-                print("File uploaded successfully")
-            except NoCredentialsError:
-                print("Credentials not available")
+    # Convert the NumPy array to audio file
+    wv.write("recording1.wav", recording, freq, sampwidth=2)
+    return recording
 
 
-            # Create a Amazon Transcribe client
-            transcribe = boto3.client('transcribe')
+def transcribe_audio(audio_url):
+    try:
+        response = openai.Transcription.create(
+            audio_url=audio_url,
+            model="whisper",
+            language="en",
+            format="text"
+        )
+            
+        if response.status == "completed":
+            return response['text']
+        else:
+            return None
+            
+    except Exception as e:
+        print("Error:", e)
+        return None
+    
+# def submit_audio(request):
+#     file = request.FILES['file']
+#     random_filename = str(uuid.uuid4())
+#     path = "C:\\Users\\cz520\\debate_assistance\\recordings\\" + random_filename + ".wav"
+#     with open(path, 'wb') as destination:
+#         for chunk in file.chunks():
+#             destination.write(chunk)
 
-            # Specify the S3 URI of the audio file you want to transcribe
-            audio_uri = 's3://languagelearner/input.mp3'
-
-            # # Start the transcription job
-            # transcribe.start_transcription_job(
-            #     TranscriptionJobName='YourTranscriptionJobName',
-            #     Media={'MediaFileUri': audio_uri},
-            #     MediaFormat='mp3',  # Update this according to your audio file format
-            #     LanguageCode='fr-FR'  # Update this according to the spoken language
-            # )
-
-            # # Wait for the transcription job to complete
-            # while True:
-            #     response = transcribe.get_transcription_job(
-            #         TranscriptionJobName='YourTranscriptionJobName'
-            #     )
-            #     if response['TranscriptionJob']['TranscriptionJobStatus'] in ['COMPLETED', 'FAILED']:
-            #         break
-
-            # # Get the transcription results
-            # if response['TranscriptionJob']['TranscriptionJobStatus'] == 'COMPLETED':
-            #     transcript_uri = response['TranscriptionJob']['Transcript']['TranscriptFileUri']
-            #     transcript = transcribe.get_object(Bucket='your-bucket', Key=transcript_uri.split('/')[-1])['Body'].read().decode('utf-8')
-            #     print(transcript)
-            # else:
-            #     print("Transcription job failed.")
-
-
+#     fi = open(path, 'rb')
+#     response = openai.Audio.transcribe(
+#         api_key=KEY,
+#         model='whisper-1',
+#         file=fi,
+#         response_format="text"
+#     )
+#     fi.close()
+#     os.remove(path)
+#     return JsonResponse(response, safe=False)
 
 
 #------------------------------------------------------------------------------------------------------------------------------------
@@ -159,28 +157,21 @@ def total_counts(response):
 
 def main():
     pygame.init()
-    output_wav = "recorded_audio.wav"
-    input = "input.mp3"
-    a = Audio()
+    recorded_data = record_audio()
+    time.sleep(5)
     talk = Chat()
-    
-    # Define the WAV and MP3 file names
-    output_wav = "recorded_audio.wav"
-    output_mp3 = "input.mp3"
 
-    # Call the function to record audio
+    audio_url = 'YOUR_AUDIO_URL'
+    #will add transcription func later
 
-    a.record_audio_with_threshold(output_wav)
-    
-    # Load the recorded audio from the WAV file
-    audio = AudioSegment.from_wav(output_wav)
+    # transcription = transcribe_audio(audio_url)
 
-    # Export the recorded audio as MP3 with the desired file name
-    audio.export(output_mp3, format="mp3")
-
-    # Print a message indicating the conversion is complete
-    print("Conversion to MP3 complete.")
-    print()
+    # if transcription:
+    #     print("Transcription:")
+    #     print(transcription)
+    # else:
+    #     print("Transcription failed.")
+    #     print()
     count = 0
     count_limit = eval(input("你想要对话的次数是多少呢？\n(请输入数字即可)"))
     while count < count_limit:  # 上下文token数量是有极限的，理论上只能支持有限轮次的对话，况且，钱花光了也就不能用了。。。

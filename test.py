@@ -8,33 +8,41 @@ import sounddevice as sd
 import soundfile as sf
 from pydub import AudioSegment
 
+
+# import required libraries
+import sounddevice as sd
+from scipy.io.wavfile import write
+import wavio as wv
+
+
 class Audio:
-    def record_audio_with_threshold(output_wav, sample_rate=44100, channels=2, threshold=0.01, min_silence_duration=1):
-        print("Recording...")
 
-        audio_data = []
+    def record_audio(self):
+        # Sampling frequency
+        freq = 44100
 
-        def callback(indata, frames, time, status):
-            if status:
-                print("Error:", status)
-            if any(indata > threshold):
-                audio_data.extend(indata)
+        # Recording duration
+        duration = 5
 
-        # Start recording
-        with sd.InputStream(callback=callback, channels=channels, samplerate=sample_rate):
-            sd.sleep(int(min_silence_duration * 1000))  # Let the recording continue for the specified silence duration
+        # Start recorder with the given values
+        # of duration and sample frequency
+        recording = sd.rec(int(duration * freq),samplerate=freq, channels=1)
 
-        print("Recording finished.")
+        # Record audio for the given number of seconds
+        sd.wait()
 
-        # Convert the recorded audio to WAV
-        sf.write(output_wav, audio_data, sample_rate)
+        # This will convert the NumPy array to an audio
+        # file with the given sampling frequency
+        #write("input0.wav", freq, recording)
+
+        # Convert the NumPy array to audio file
+        wv.write("input1.wav", recording, freq, sampwidth=2)
 
 
 def main():
-    output_wav = "recorded_audio.wav"
+    # output_wav = "recorded_audio.wav"
     audio = Audio()
-
-    audio.record_audio_with_threshold(output_wav)
+    audio.record_audio()
     
 
 
